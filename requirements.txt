@@ -1,0 +1,5 @@
+fastapi~=0.115.12
+uvicorn
+pydantic~=2.11.1
+pymongo~=4.11.3
+python-dotenv~=1.1.0
