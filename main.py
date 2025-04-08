@@ -31,6 +31,12 @@ class Hand(BaseModel):
             "domino_two": self.domino_two.to_dict()
         }
 
+class UpdateData(BaseModel):
+    player: str
+    score: int
+
+class Item(BaseModel):
+    id : str
 
 class GameInfo(BaseModel):
     player_one_hand: Hand
@@ -54,20 +60,21 @@ app.add_middleware(
 def home():
     return {"message": "Domino game server running!"}
 
-
-@app.get("/game_state")
-def game_state():
-    example_state = {
-        "d_one": {"side_a": 1, "side_b": 1},
-        "d_two": {"side_a": 2, "side_b": 2}
-    }
-    return {
-        "date": "2025-04-04",
-        "temperatureC": 51,
-        "temperatureF": 123,
-        "summary": "Freezing",
-        "domino": json.dumps(example_state)
-    }
+@app.get("/game_state/{item}")
+def game_state(item: str):
+    print('item: ', item)
+    return item
+    # example_state = {
+    #     "d_one": {"side_a": 1, "side_b": 1},
+    #     "d_two": {"side_a": 2, "side_b": 2}
+    # }
+    # return {
+    #     "date": "2025-04-04",
+    #     "temperatureC": 51,
+    #     "temperatureF": 123,
+    #     "summary": "Freezing",
+    #     "domino": json.dumps(example_state)
+    # }
 
 
 @app.post("/create_game/")
@@ -98,9 +105,37 @@ async def create_game(domino: Domino):
     client.close()
     print("Client Closed successfully")
 
-    return {"received": str(post_id) if post_id else None}
+    #return {"received": str(post_id) if post_id else None}
+    return str(post_id)
 
 # Optional: If you want a placeholder for bad requests or form data testing
 @app.post("/create_game_bad")
 async def create_game_bad(request: Request):
     return {"message": "This route is not implemented yet"}
+
+@app.put("/update_game/{game_id}")
+def update_game(game_id: str, updated_data: UpdateData):
+    return {"message": f"Game {game_id} updated", "data": updated_data}
+
+@app.delete("/delete_game/{game_id}")
+def delete_game(game_id: str):
+    # Logic to delete the game using the game_id
+    print(f"Deleting game with ID: {game_id}")
+    return {"message": f"Game {game_id} updated"}
+
+    # Example: Delete the game from the database or any other storage
+    # try:
+    #     client = MongoClient(os.getenv("DATABASE_CONNECTION_STRING"))
+    #     db = client.BookStore  # Use your actual database name
+    #     posts = db.posts
+    #     result = posts.delete_one({"_id": game_id})  # Assuming game_id is the _id in MongoDB
+    #     if result.deleted_count > 0:
+    #         return {"message": f"Game {game_id} deleted successfully."}
+    #     else:
+    #         return {"message": f"Game {game_id} not found."}
+    # except Exception as e:
+    #     print(f"Error deleting game: {e}")
+    #     return {"message": "Error occurred while deleting the game."}
+    # finally:
+    #     client.close()
+
