@@ -79,6 +79,23 @@ async def create_game(domino: Domino):
     #return {"received": str(post_id) if post_id else None}
     return str(f"create_game: {post_id}")
 
+@app.post("/create_game_by_name/{game_name}")
+async def create_game_by_name(game_name: str):
+    print("create_game:", game_name)
+    client = MongoClient(os.getenv("DATABASE_CONNECTION_STRING"))
+    post_id = 0
+    try:
+        db = client.BookStore
+        posts = db.posts
+        #post_id = posts.insert_one(domino.to_dict()).inserted_id
+        post_id = 123
+        print("post_id: ", post_id)
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    client.close()
+    print("Client Closed successfully")
+    return str(f"create_game: {post_id}")
+
 @app.put("/update_game/{game_id}")
 def update_game(game_id: str, updated_data: UpdateData):
     print(f"update_game: {game_id} {UpdateData}")
