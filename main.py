@@ -83,11 +83,15 @@ async def create_game_by_name(game_name: str):
         db = client.ShootTheMoon
         games = db.games
         post_id = games.insert_one(game.to_dict()).inserted_id
+        game = games.find_one({'_id': post_id})
         print("post_id: ", post_id)
     except Exception as e:
         print(f"An error occurred: {e}")
     client.close()
-    return str(f"POST COMPLETE create_game_by_name: {post_id}")
+    if game and '_id' in game:
+        game['id'] = str(game['_id'])
+        del game['_id']
+    return game
 
 # @app.put("/update_game/{game_id}")
 # def update_game(game_id: str, updated_data: UpdateData):
