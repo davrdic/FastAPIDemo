@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pymongo import MongoClient
 from dotenv import load_dotenv
-from models.gamestate import Domino, UpdateData, NewGame
+from models.gamestate import Domino, create_initial_game_state, ALL_DOMINOES
 
 # Load environment variables from .env file
 load_dotenv()
@@ -55,7 +55,7 @@ def find_game_by_name(name: str):
 
 @app.post("/create_game/")
 async def create_game(domino: Domino):
-    print("create_game:", domino.side_a, domino.side_b)
+    print("create_game:", domino.sideA, domino.sideB)
     client = MongoClient(os.getenv("DATABASE_CONNECTION_STRING"))
     post_id = 0
     try:
@@ -76,7 +76,9 @@ async def create_game_by_name(game_name: str):
     print(" POST create_game_by_name: ", game_name)
     client = MongoClient(os.getenv("DATABASE_CONNECTION_STRING"))
     post_id = 0
-    game = NewGame(name=game_name)
+    game = create_initial_game_state(game_name)
+    print("game: ", game)
+    #print("all dominos: ", ALL_DOMINOES)
     try:
         db = client.ShootTheMoon
         games = db.games
@@ -87,10 +89,10 @@ async def create_game_by_name(game_name: str):
     client.close()
     return str(f"POST COMPLETE create_game_by_name: {post_id}")
 
-@app.put("/update_game/{game_id}")
-def update_game(game_id: str, updated_data: UpdateData):
-    print(f"update_game: {game_id} {UpdateData}")
-    return {f"update_game: {game_id} {updated_data}"}
+# @app.put("/update_game/{game_id}")
+# def update_game(game_id: str, updated_data: UpdateData):
+#     print(f"update_game: {game_id} {UpdateData}")
+#     return {f"update_game: {game_id} {updated_data}"}
 
 @app.delete("/delete_game/{game_id}")
 def delete_game(game_id: str):
