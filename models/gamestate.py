@@ -1,5 +1,6 @@
 from typing import List, Optional
 from pydantic import BaseModel
+import random
 
 
 class Domino(BaseModel):
@@ -59,10 +60,13 @@ def create_initial_game_state(name: str) -> NewGame:
     )
 
 def create_shuffled_hands() -> Hands:
-    hands = [
-        [ALL_DOMINOES[0], ALL_DOMINOES[1], ALL_DOMINOES[2], ALL_DOMINOES[3], ALL_DOMINOES[4], ALL_DOMINOES[5], ALL_DOMINOES[6]],
-        [ALL_DOMINOES[7], ALL_DOMINOES[8], ALL_DOMINOES[9], ALL_DOMINOES[10], ALL_DOMINOES[11], ALL_DOMINOES[12], ALL_DOMINOES[13]],
-        [ALL_DOMINOES[14], ALL_DOMINOES[15], ALL_DOMINOES[16], ALL_DOMINOES[17], ALL_DOMINOES[18], ALL_DOMINOES[19], ALL_DOMINOES[20]],
-        [ALL_DOMINOES[21], ALL_DOMINOES[22], ALL_DOMINOES[23], ALL_DOMINOES[24], ALL_DOMINOES[25], ALL_DOMINOES[26], ALL_DOMINOES[27]]
-    ]
+    new_stack = ALL_DOMINOES[:]
+    random.shuffle(new_stack)
+
+    hands = [[] for _ in range(4)]
+
+    for a in range(4):
+        for b in range(7):
+            hands[a].append(new_stack.pop())
+
     return hands
