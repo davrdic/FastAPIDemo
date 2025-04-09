@@ -2,42 +2,12 @@ import os
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 from pymongo import MongoClient
 from dotenv import load_dotenv
+from models.gamestate import Domino, UpdateData, NewGame
 
 # Load environment variables from .env file
 load_dotenv()
-
-# Models
-class Domino(BaseModel):
-    side_a: int
-    side_b: int
-
-    def to_dict(self):
-        return {"side_a": self.side_a, "side_b": self.side_b}
-
-
-class Hand(BaseModel):
-    domino_one: Domino
-    domino_two: Domino
-
-    def to_dict(self):
-        return {
-            "domino_one": self.domino_one.to_dict(),
-            "domino_two": self.domino_two.to_dict()
-        }
-
-class UpdateData(BaseModel):
-    player: str
-    score: int
-
-class Item(BaseModel):
-    id : str
-
-class GameInfo(BaseModel):
-    player_one_hand: Hand
-    player_two_hand: Hand
 
 # FastAPI app setup
 app = FastAPI()
@@ -61,6 +31,28 @@ def game_state(item: str):
     print('game_state: ', item)
     return item
 
+@app.get("/find_game_by_name/{name}")
+def find_game_by_name(name: str):
+    print('find_game_by_name: ', name)
+    client = MongoClient(os.getenv("DATABASE_CONNECTION_STRING"))
+    game = any
+
+    try:
+        db = client["ShootTheMoon"]
+        games = db["games"]
+        game = games.find_one({"name": name})
+        print("Game found: ", game)
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    client.close()
+    print("Client Closed successfully")
+
+    if game and '_id' in game:
+        game['id'] = str(game['_id'])
+        del game['_id']
+
+    return game
+
 @app.post("/create_game/")
 async def create_game(domino: Domino):
     print("create_game:", domino.side_a, domino.side_b)
@@ -81,20 +73,19 @@ async def create_game(domino: Domino):
 
 @app.post("/create_game_by_name/{game_name}")
 async def create_game_by_name(game_name: str):
-    print("create_game:", game_name)
+    print(" POST create_game_by_name: ", game_name)
     client = MongoClient(os.getenv("DATABASE_CONNECTION_STRING"))
     post_id = 0
+    game = NewGame(name=game_name)
     try:
-        db = client.BookStore
-        posts = db.posts
-        #post_id = posts.insert_one(domino.to_dict()).inserted_id
-        post_id = 123
+        db = client.ShootTheMoon
+        games = db.games
+        post_id = games.insert_one(game.to_dict()).inserted_id
         print("post_id: ", post_id)
     except Exception as e:
         print(f"An error occurred: {e}")
     client.close()
-    print("Client Closed successfully")
-    return str(f"create_game: {post_id}")
+    return str(f"POST COMPLETE create_game_by_name: {post_id}")
 
 @app.put("/update_game/{game_id}")
 def update_game(game_id: str, updated_data: UpdateData):
