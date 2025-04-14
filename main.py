@@ -4,7 +4,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pymongo import MongoClient
 from dotenv import load_dotenv
-from models.gamestate import Domino, create_initial_game_state, ALL_DOMINOES
+
+from Models.GameModel import create_new_game, get_game_state, update_current_round
+from Models.HandRecord import create_hands
+from MongoRepositories.DominoRepository import get_domino_deck
+from gameService import deal_dominos
+from gamestate import Domino
+from Models.RoundModel import create_round
 
 # Load environment variables from .env file
 load_dotenv()
@@ -50,8 +56,32 @@ def find_game_by_name(name: str):
     if game and '_id' in game:
         game['id'] = str(game['_id'])
         del game['_id']
+    if game and 'currentRoundId' in game:
+        game['currentRoundIdString'] = str(game['currentRoundId'])
+        del game['currentRoundId']
 
     return game
+
+@app.get("/find_all_game_names/")
+def find_all_game_names():
+    print('find_all_game_names')
+    client = MongoClient(os.getenv("DATABASE_CONNECTION_STRING"))
+    names_list = []
+    try:
+        db = client["ShootTheMoon"]
+        games_collection = db["games"]
+
+        # Query to get only the "name" field from all game documents
+        game_names = games_collection.find({}, {"_id": 0, "name": 1})
+
+        # Convert cursor to a list of names
+        names_list = [game["name"] for game in game_names]
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    client.close()
+    print("Client Closed successfully")
+
+    return names_list
 
 @app.post("/create_game/")
 async def create_game(domino: Domino):
@@ -73,24 +103,50 @@ async def create_game(domino: Domino):
 
 @app.post("/create_game_by_name/{game_name}")
 async def create_game_by_name(game_name: str):
-    print(" POST create_game_by_name: ", game_name)
+    print("Start POST create_game_by_name: ", game_name)
     client = MongoClient(os.getenv("DATABASE_CONNECTION_STRING"))
-    post_id = 0
-    game = create_initial_game_state(game_name)
-    print("game: ", game)
-    #print("all dominos: ", ALL_DOMINOES)
+    deck = get_domino_deck(0, 28)
+    game_id = create_new_game(game_name)
+    print("game_id: ", game_id)
+    round_id = create_round(client, game_id)
+    print("round_id: ", round_id)
+    hand_ids = deal_dominos(deck, game_id, round_id)
+    #hand_ids = create_hands(client, game_id, round_id, hands)
+    #print("hand_ids: ", hand_ids)
+    round_result = update_current_round(client, game_id, round_id)
+    game = {"game_id": str(game_id), "round_id": str(round_id), "hand_ids": str(hand_ids), "round_result": str(round_result)}#= get_game_state(game_id)
+    # client = MongoClient(os.getenv("DATABASE_CONNECTION_STRING"))
+    # post_id = 0
+    # game = create_initial_game_state(game_name)
+    # print("game: ", game)
+    # #print("all dominos: ", ALL_DOMINOES)
     try:
-        db = client.ShootTheMoon
-        games = db.games
-        post_id = games.insert_one(game.to_dict()).inserted_id
-        game = games.find_one({'_id': post_id})
-        print("post_id: ", post_id)
+        print("try block start create_game_by_name: ", game_name)
+        # db = client.ShootTheMoon
+        # games = db.games
+        # post_id = games.insert_one(game.to_dict()).inserted_id
+        # game = games.find_one({'_id': post_id})
+        # print("post_id: ", post_id)
+        # new_round_doc = create_new_round(post_id)
+        # round_id = db.rounds.insert_one(new_round_doc).inserted_id
+        # print('round_id: ', round_id)
+        # update_data = {
+        #     "currentRoundId": round_id
+        # }
+        # result = db.games.update_one({"_id": post_id}, {"$set": update_data})
+        # print("after update: ", result)
+        # #game = games.find_one({'_id': post_id})
+        print("try block end create_game_by_name: ", game_name)
     except Exception as e:
         print(f"An error occurred: {e}")
-    client.close()
-    if game and '_id' in game:
-        game['id'] = str(game['_id'])
-        del game['_id']
+    #client.close()
+    # if game and '_id' in game:
+    #     game['id'] = str(game['_id'])
+    #     del game['_id']
+    # if game and 'currentRoundId' in game:
+    #     game['currentRoundIdString'] = str(game['currentRoundId'])
+    #     del game['currentRoundId']
+    print("End POST create_game_by_name: ", game_name)
     return game
 
 # @app.put("/update_game/{game_id}")

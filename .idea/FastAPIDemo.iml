@@ -5,4 +5,11 @@
     <orderEntry type="jdk" jdkName="Python 3.13 virtualenv at C:\Users\davrd\source\repos\FastAPIDemo\venv" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
+  <component name="PyNamespacePackagesService">
+    <option name="namespacePackageFolders">
+      <list>
+        <option value="$MODULE_DIR$/Scripts" />
+      </list>
+    </option>
+  </component>
 </module>
