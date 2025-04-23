@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pymongo import MongoClient
 from dotenv import load_dotenv
 
-from Models.GameModel import create_new_game, get_game_state, update_current_round
+from Models.GameModel import create_new_game, get_game_state_old, update_current_round, get_game_state
 from Models.HandRecord import create_hands
 from MongoRepositories.DominoRepository import get_domino_deck
 from gameService import deal_dominos
@@ -32,16 +32,17 @@ app.add_middleware(
 def home():
     return {"message": "Domino game server running!"}
 
-@app.get("/game_state/{item}")
-def game_state(item: str):
-    print('game_state: ', item)
-    return item
+# @app.get("/game_state/{item}")
+# def game_state(item: str):
+#     print('game_state: ', item)
+#     return item
 
 @app.get("/find_game_by_name/{name}")
 def find_game_by_name(name: str):
     print('find_game_by_name: ', name)
     client = MongoClient(os.getenv("DATABASE_CONNECTION_STRING"))
     game = any
+    game_state = any
 
     try:
         db = client["ShootTheMoon"]
@@ -50,17 +51,18 @@ def find_game_by_name(name: str):
         print("Game found: ", game)
     except Exception as e:
         print(f"An error occurred: {e}")
+    game_id = game['_id']
+    # if game and '_id' in game:
+    #     game['id'] = str(game['_id'])
+    #     del game['_id']
+    # if game and 'currentRoundId' in game:
+    #     game['currentRoundIdString'] = str(game['currentRoundId'])
+    #     del game['currentRoundId']
+    if game_id:
+        game_state = get_game_state(client, game_id)
     client.close()
     print("Client Closed successfully")
-
-    if game and '_id' in game:
-        game['id'] = str(game['_id'])
-        del game['_id']
-    if game and 'currentRoundId' in game:
-        game['currentRoundIdString'] = str(game['currentRoundId'])
-        del game['currentRoundId']
-
-    return game
+    return game_state
 
 @app.get("/find_all_game_names/")
 def find_all_game_names():
@@ -101,6 +103,7 @@ async def create_game(domino: Domino):
     #return {"received": str(post_id) if post_id else None}
     return str(f"create_game: {post_id}")
 
+#Doc this one
 @app.post("/create_game_by_name/{game_name}")
 async def create_game_by_name(game_name: str):
     print("Start POST create_game_by_name: ", game_name)
@@ -114,7 +117,8 @@ async def create_game_by_name(game_name: str):
     #hand_ids = create_hands(client, game_id, round_id, hands)
     #print("hand_ids: ", hand_ids)
     round_result = update_current_round(client, game_id, round_id)
-    game = {"game_id": str(game_id), "round_id": str(round_id), "hand_ids": str(hand_ids), "round_result": str(round_result)}#= get_game_state(game_id)
+    game = {"game_id": str(game_id), "round_id": str(round_id), "hand_ids": str(hand_ids), "round_result": str(round_result)}
+    game_state = get_game_state(client, game_id)
     # client = MongoClient(os.getenv("DATABASE_CONNECTION_STRING"))
     # post_id = 0
     # game = create_initial_game_state(game_name)
@@ -139,7 +143,7 @@ async def create_game_by_name(game_name: str):
         print("try block end create_game_by_name: ", game_name)
     except Exception as e:
         print(f"An error occurred: {e}")
-    #client.close()
+    client.close()
     # if game and '_id' in game:
     #     game['id'] = str(game['_id'])
     #     del game['_id']
@@ -147,7 +151,7 @@ async def create_game_by_name(game_name: str):
     #     game['currentRoundIdString'] = str(game['currentRoundId'])
     #     del game['currentRoundId']
     print("End POST create_game_by_name: ", game_name)
-    return game
+    return game_state
 
 # @app.put("/update_game/{game_id}")
 # def update_game(game_id: str, updated_data: UpdateData):

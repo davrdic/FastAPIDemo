@@ -9,11 +9,17 @@ from Models.DominoRecord import DominoRecord
 
 class RoundModel(BaseModel):
     id: str | Optional[PyObjectId] = Field(alias="_id", default=None)
-    game_id: PyObjectId
+    game_id: str | PyObjectId
     round_number: int = Field(default=1)
     arena: List[DominoRecord] = Field(default=[])
-    turn_order: List[int] = Field(default=[])
+    turn_order: List[int] = Field(default=[0, 1, 2, 3])
     current_player_id: int = Field(default=0)
+    dealer: int = Field(default=0)
+    roundLeader: int = Field(default=-1)
+    spade: int = Field(default=-1)
+    highestBid: int = Field(default=0)
+    winningBid: int = Field(default=0)
+    playerTurn: int = Field(default=0)
 
     class Config:
         validate_by_name = True

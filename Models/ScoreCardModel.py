@@ -6,7 +6,7 @@ from pymongo import MongoClient
 from CustomTypes.PyObjectId import PyObjectId
 
 class ScoreCardModel(BaseModel):
-    id: Optional[PyObjectId] = Field(alias="_id", default=None)
+    # id: Optional[PyObjectId] = Field(alias="_id", default=None)
     teamScores: Optional[List[int]] = None
 
     class Config:
